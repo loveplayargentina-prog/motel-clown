@@ -1,0 +1,11 @@
+[
+  {"id":"duvi","nombre":"Duvi","debilidad":"peluche"},
+  {"id":"lulu","nombre":"LuluClown","debilidad":"sonido fuerte"},
+  {"id":"minimax","nombre":"MiniMaxi","debilidad":"espacios estrechos"},
+  {"id":"dindon","nombre":"DinDón","debilidad":"luz intensa"},
+  {"id":"alfac","nombre":"AlfaClown","debilidad":"luz brillante"},
+  {"id":"azasel","nombre":"AzaselClown","debilidad":"ruido fuerte"},
+  {"id":"kevl","nombre":"Kevlor","debilidad":"luz brillante"},
+  {"id":"betac","nombre":"BetaClown","debilidad":"agilidad reducida"},
+  {"id":"minib","nombre":"MiniBetaClown","debilidad":"obstáculos"}
+]
