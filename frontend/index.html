@@ -1,19 +1,88 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Motel Clown</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Motel Clown - Horror Experience</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      background:radial-gradient(circle,#200000,#000);
+      color:#eee;
+      font-family:'Courier New',monospace;
+      height:100vh;
+      overflow:hidden;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      animation:pulseBg 6s infinite alternate ease-in-out;
+    }
+    h1{
+      color:#f00;
+      text-shadow:0 0 15px #f00;
+      animation:flicker 3s infinite;
+      font-size:2.5em;
+    }
+    button{
+      margin-top:25px;
+      padding:10px 20px;
+      border:2px solid #700;
+      background:#200;
+      color:#fff;
+      border-radius:8px;
+      cursor:pointer;
+      transition:0.3s;
+    }
+    button:hover{background:#900;box-shadow:0 0 20px #f00}
+    @keyframes flicker{
+      0%,18%,22%,25%,53%,57%,100%{opacity:1}
+      20%,24%,55%{opacity:.2}
+    }
+    @keyframes pulseBg{
+      0%{background:radial-gradient(circle,#100,#000)}
+      100%{background:radial-gradient(circle,#400000,#100)}
+    }
+    .blood{position:absolute;inset:0;background:url('blood.png') center/cover no-repeat;opacity:.3;mix-blend-mode:multiply}
+    #clownFace{position:absolute;bottom:10%;width:180px;opacity:0;transition:.3s;filter:contrast(1.4)}
+    #scene{margin-top:20px;width:80%;max-width:600px;text-align:center;line-height:1.6}
+    audio{display:none}
+  </style>
 </head>
 <body>
-<h1 id="title">Bienvenido al Motel Clown</h1>
-<p id="description">Prepárate para sobrevivir a los payasos.</p>
-<div id="choices"></div>
-<div id="status">
-  <p>Miedo: <span id="fear">0</span>%</p>
-  <p>Objetos: <span id="inventory"></span></p>
-</div>
-<canvas id="gameCanvas" width="800" height="400"></canvas>
-<script src="script.js"></script>
+  <audio id="bgMusic" src="ambience.mp3" loop></audio>
+  <div class="blood"></div>
+  <img id="clownFace" src="clown.png" alt="payaso">
+  <h1>Bienvenido al Motel Clown</h1>
+  <p>Prepárate para sobrevivir a los payasos.</p>
+  <div id="scene"></div>
+  <button id="startBtn">Entrar</button>
+
+  <script>
+    const bg=document.getElementById("bgMusic");
+    const clown=document.getElementById("clownFace");
+    const sceneDiv=document.getElementById("scene");
+    const startBtn=document.getElementById("startBtn");
+    let fear=0;
+    function flash(){document.body.style.filter="invert(1)";setTimeout(()=>document.body.style.filter="",150);}
+    function showClown(){clown.style.opacity=1;setTimeout(()=>clown.style.opacity=0,600+Math.random()*1500);}
+    async function nextScene(choice){
+      try{
+        const r=await fetch("/api/scene",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({playerId:"web",choice})});
+        const d=await r.json();
+        if(d.ok){renderScene(d.data);}
+        else{sceneDiv.innerHTML="El motel se quedó sin señal...";}
+      }catch(e){sceneDiv.innerHTML="<b>OpenAI desconectado</b>";}
+    }
+    function renderScene(s){
+      flash();
+      if(Math.random()>.6)showClown();
+      fear=s.fear;
+      sceneDiv.innerHTML=\`
+        <h2>\${s.title}</h2>
+        <p>\${s.description}</p>
+        <p><b>Miedo:</b> \${fear}%</p>
+        \${s.choices.map(c=>\`<button onclick="nextScene('\${c.id}')">\${c.text}</button>\`).join("<br>")}
+      \`;
+    }
+    startBtn.onclick=()=>{bg.play();nextScene();startBtn.style.display="none";}
+  </script>
 </body>
 </html>
