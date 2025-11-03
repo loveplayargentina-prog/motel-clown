@@ -14,71 +14,87 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({apiKey:process.env.OPENAI_API_KEY});
 
-function cargarPayasos() {
-    return JSON.parse(fs.readFileSync("./payasos.json", "utf8"));
-}
+function cargarPayasos(){ return JSON.parse(fs.readFileSync("./payasos.json","utf8")); }
 let payasos = cargarPayasos();
 
+
+// 🩸 HISTORIA PSICÓTICA OFFLINE — “El Motel de las Caras Pintadas”
 const historiaBase = [
-    { id:1, title:"Primer contacto", description:"El jugador llega al Motel Clown y escucha ruidos extraños.", choices:[{id:"c1",text:"Explorar habitación"},{id:"c2",text:"Salir corriendo"}]},
-    { id:2, title:"Payaso misterioso", description:"Un payaso aparece en el pasillo con ojos brillantes.", choices:[{id:"c1",text:"Esconderse"},{id:"c2",text:"Enfrentar"}]}
+  {
+    id: 1,
+    title: "Entrada prohibida",
+    description:
+      "El neón parpadea sobre la puerta del Motel Clown. El aire huele a óxido y perfume barato. Desde adentro se oyen risas… distorsionadas, como si salieran de una radio rota.",
+    choices: [
+      { id: "c1", text: "Entrar al vestíbulo" },
+      { id: "c2", text: "Mirar por la ventana" }
+    ],
+    bgImage: "entrada.png",
+    sound: "neon-buzz.mp3",
+    spawnClown: "duvi.png"
+  },
+  {
+    id: 2,
+    title: "El vestíbulo rojo",
+    description:
+      "La luz roja titila sobre las paredes manchadas. En el suelo, un globo inflado palpita como si tuviera pulso. Detrás del mostrador, un payaso con mandíbula rota te sonríe y dice: 'Check-in… o check-out eterno'.",
+    choices: [
+      { id: "c1", text: "Hablar con el payaso" },
+      { id: "c2", text: "Correr hacia el pasillo" }
+    ],
+    bgImage: "lobby.png",
+    sound: "heartbeat.mp3",
+    spawnClown: "lulu.png"
+  },
+  {
+    id: 3,
+    title: "Habitación 13",
+    description:
+      "El espejo está empañado, pero ves figuras detrás de tu reflejo. Una voz susurra tu nombre, aunque nunca lo dijiste. En la cama, un disfraz de payaso te espera, doblado cuidadosamente.",
+    choices: [
+      { id: "c1", text: "Ponerte el disfraz" },
+      { id: "c2", text: "Romper el espejo" }
+    ],
+    bgImage: "room13.png",
+    sound: "whispers.mp3",
+    spawnClown: "pipo.png"
+  },
+  {
+    id: 4,
+    title: "La sonrisa del reflejo",
+    description:
+      "El espejo no se rompe. En cambio, sonríe. Tu reflejo empieza a moverse sin vos, inclinando la cabeza como un payaso curioso. Del vidrio gotea pintura blanca y roja.",
+    choices: [
+      { id: "c1", text: "Tocar el espejo" },
+      { id: "c2", text: "Apagar la luz" }
+    ],
+    bgImage: "mirror.png",
+    sound: "glass-drip.mp3",
+    spawnClown: "fifi.png"
+  },
+  {
+    id: 5,
+    title: "El pasillo de las risas",
+    description:
+      "Cada puerta que pasás tiene una voz detrás. Algunos lloran, otros ríen, otros gritan. Un altavoz chisporrotea: 'El espectáculo está por comenzar...'. Las luces se apagan.",
+    choices: [
+      { id: "c1", text: "Seguir las risas" },
+      { id: "c2", text: "Entrar en la primera habitación abierta" }
+    ],
+    bgImage: "hallway2.png",
+    sound: "laughter.mp3",
+    spawnClown: "joko.png"
+  },
+  {
+    id: 6,
+    title: "El show final",
+    description:
+      "Estás en un escenario. La audiencia son payasos sin ojos que aplauden sin parar. Detrás de ti, una voz familiar susurra: 'Ahora sos uno de nosotros'. Te sentís liviano, vacío, y la pantalla empieza a derretirse.",
+    choices: [],
+    bgImage: "stage.png",
+    sound: "applause-distorted.mp3",
+    spawnClown: "final.png"
+  }
 ];
-
-const playersState = {};
-
-app.post("/api/scene", async (req,res)=>{
-    try{
-        const { playerId, choice } = req.body;
-        if(!playerId) return res.status(400).json({ok:false,error:"playerId requerido"});
-        if(!playersState[playerId]) playersState[playerId] = {currentScene:0,history:[],fear:0,inventory:[]};
-        const player = playersState[playerId];
-        if(choice && player.currentScene>0) player.history.push({sceneId:player.currentScene, choice});
-        if(player.currentScene >= historiaBase.length){
-            return res.json({ok:true, data:{title:"FIN", description:"¡Has completado todas las aventuras!", choices:[], fear:player.fear, inventory:player.inventory}});
-        }
-
-        let scene = historiaBase[player.currentScene];
-        const payasosPrompt = payasos.map(p=>`${p.nombre}: debilidad = ${p.debilidad}`).join("\n");
-        const prompt = `
-Jugador tiene miedo: ${player.fear}%
-Inventario: ${player.inventory.join(", ") || "Nada"}
-Payasos del Motel Clown:
-${payasosPrompt}
-Genera un JSON válido con título, descripción y opciones de historieta basado en esto:
-Título: ${scene.title}
-Descripción: ${scene.description}
-Opciones: ${scene.choices.map(c=>c.text).join(", ")}
-        `;
-
-        let aiScene;
-        try{
-            const completion = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
-                messages: [{role:"user", content: prompt}]
-            });
-            aiScene = JSON.parse(completion.choices[0].message.content);
-        }catch(e){
-            console.log("OpenAI falló, usando escena base.", e.message);
-            aiScene = {title: scene.title, description: scene.description, choices: scene.choices};
-        }
-
-        player.currentScene++;
-        res.json({ok:true, data: {...aiScene, fear:player.fear, inventory:player.inventory}});
-    }catch(e){
-        console.log(e);
-        res.status(500).json({ok:false,error:e.message});
-    }
-});
-
-// 🔹 Servir frontend estático
-app.use(express.static(path.join(__dirname, '../frontend')));
-
-// Catch-all route SPA compatible Express 5
-app.use((req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, ()=>console.log(`✅ Motel Clown backend corriendo en puerto ${PORT}`));

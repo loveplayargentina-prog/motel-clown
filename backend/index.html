@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Motel Clown - Horror Experience</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background: radial-gradient(circle, #300000, #000);
+      color: #f8e8e8;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+      height: 100vh;
+      transition: background 2s, filter 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      animation: pulseBg 6s infinite alternate ease-in-out;
+    }
+    h1 {
+      color: #ff0000;
+      text-shadow: 0 0 20px #ff0000;
+      font-size: 2.5rem;
+      animation: flicker 3s infinite;
+    }
+    p {
+      margin-top: 10px;
+      font-size: 1.1rem;
+    }
+    button {
+      margin-top: 30px;
+      padding: 12px 25px;
+      font-size: 1rem;
+      background: #2b0000;
+      color: white;
+      border: 2px solid #900;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #900;
+      box-shadow: 0 0 20px #f00;
+    }
+    @keyframes flicker {
+      0%, 18%, 22%, 25%, 53%, 57%, 100% {
+        text-shadow: 0 0 20px #f00, 0 0 30px #ff2222, 0 0 40px #f00;
+      }
+      20%, 24%, 55% {
+        text-shadow: none;
+      }
+    }
+    @keyframes pulseBg {
+      0% { background: radial-gradient(circle, #1a0000, #000); filter: hue-rotate(0deg); }
+      100% { background: radial-gradient(circle, #400000, #100); filter: hue-rotate(180deg); }
+    }
+    .flash {
+      animation: flash 0.2s ease-in-out;
+    }
+    @keyframes flash {
+      0% { background-color: #fff; }
+      100% { background-color: transparent; }
+    }
+    .blood {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: url('blood.png') center/cover no-repeat;
+      opacity: 0.2;
+      mix-blend-mode: multiply;
+    }
+    #clownFace {
+      position: absolute;
+      bottom: 10%;
+      width: 150px;
+      opacity: 0;
+      transition: opacity 0.4s;
+      filter: brightness(0.7) contrast(1.4);
+    }
+    #scene {
+      margin-top: 20px;
+      width: 80%;
+      max-width: 600px;
+      line-height: 1.6;
+      font-size: 1.2rem;
+      color: #eee;
+    }
+  </style>
+</head>
+<body>
+  <audio id="bgMusic" src="ambience.mp3" loop autoplay></audio>
+  <div class="blood"></div>
+  <img id="clownFace" src="clown.png" alt="payaso">
+  <h1>Bienvenido al Motel Clown</h1>
+  <p>Prepárate para sobrevivir a los payasos.</p>
+  <div id="scene"></div>
+  <button id="startBtn">Entrar</button>
+
+  <script>
+    const bgMusic = document.getElementById("bgMusic");
+    const clownFace = document.getElementById("clownFace");
+    const startBtn = document.getElementById("startBtn");
+    const sceneDiv = document.getElementById("scene");
+    let fear = 0;
+
+    function flickerEffect() {
+      document.body.classList.add("flash");
+      setTimeout(() => document.body.classList.remove("flash"), 200);
+    }
+
+    function showClown() {
+      clownFace.style.opacity = 1;
+      setTimeout(() => clownFace.style.opacity = 0, 1000 + Math.random() * 2000);
+    }
+
+    async function nextScene(choice) {
+      try {
+        const res = await fetch("/api/scene", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ playerId: "web-user", choice })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          const s = data.data;
+          fear = s.fear;
+          renderScene(s);
+        } else {
+          sceneDiv.innerHTML = "Error cargando la escena.";
+        }
+      } catch (err) {
+        sceneDiv.innerHTML = "El motel se ha quedado sin señal... <br> <em>(OpenAI desconectado)</em>";
+      }
+    }
+
+    function renderScene(scene) {
+      flickerEffect();
+      if (Math.random() > 0.5) showClown();
+      sceneDiv.innerHTML = `
+        <h2>${scene.title}</h2>
+        <p>${scene.description}</p>
+        <p><strong>Miedo:</strong> ${fear}%</p>
+        ${scene.choices.map(c => `<button onclick="nextScene('${c.id}')">${c.text}</button>`).join("<br>")}
+      `;
+    }
+
+    startBtn.onclick = () => {
+      bgMusic.play();
+      nextScene();
+      startBtn.style.display = "none";
+    };
+  </script>
+</body>
+</html>

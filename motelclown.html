@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motel Clown</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Creepster&display=swap');
+
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: url('https://upload.wikimedia.org/wikipedia/commons/6/68/Clown_Motel_Tonopah.jpg') no-repeat center center/cover;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-shadow: 2px 2px 6px #000;
+    font-family: 'Creepster', cursive;
+    transition: all 1s ease;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+  }
+
+  .content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    animation: flicker 3s infinite alternate;
+  }
+
+  h1 {
+    font-size: 4em;
+    margin: 0.2em;
+    color: #ff0000;
+  }
+
+  h2 {
+    font-size: 2em;
+    margin: 0.1em;
+  }
+
+  p {
+    font-size: 1.3em;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 1; }
+    50% { opacity: 0.85; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-5px, 5px); }
+    40% { transform: translate(5px, -5px); }
+    60% { transform: translate(-5px, -5px); }
+    80% { transform: translate(5px, 5px); }
+  }
+
+  .shake {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  .darken {
+    filter: brightness(0);
+    transition: filter 2s ease;
+  }
+</style>
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="content">
+    <h1>Payaso</h1>
+    <h2>Bienvenido al Motel Clown</h2>
+    <p>Prepárate para sobrevivir a los payasos.</p>
+  </div>
+
+  <audio id="bgSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_f5195ab1e5.mp3?filename=creepy-ambience-1-110977.mp3" loop autoplay></audio>
+
+<script>
+  const body = document.body;
+  const sound = document.getElementById("bgSound");
+
+  window.addEventListener("load", () => {
+    body.classList.add("shake");
+    sound.play().catch(() => {});
+    setTimeout(() => {
+      body.classList.add("darken");
+    }, 800);
+    setTimeout(() => {
+      document.querySelector(".content").innerHTML = "<h1>Modo Survival</h1><p>Los payasos han despertado...</p>";
+      body.style.filter = "brightness(1)";
+      body.style.background = "#000";
+    }, 3500);
+  });
+</script>
+</body>
+</html>
