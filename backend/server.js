@@ -1,10 +1,10 @@
 import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-import bodyParser from 'body-parser';
-import OpenAI from 'openai';
-import fs from 'fs';
-import path from 'path';
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
+import OpenAI from "openai";
+import fs from "fs";
+import path from "path";
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,6 +19,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 function cargarPayasos() {
     return JSON.parse(fs.readFileSync(path.join(__dirname, "payasos.json"), "utf8"));
 }
+
 let payasos = cargarPayasos();
 
 const historiaBase = [
@@ -34,25 +35,25 @@ app.post("/api/scene", async (req,res)=>{
         if(!playerId) return res.status(400).json({ok:false,error:"playerId requerido"});
         if(!playersState[playerId]) playersState[playerId] = {currentScene:0,history:[],fear:0,inventory:[]};
         const player = playersState[playerId];
-
         if(choice && player.currentScene>0) player.history.push({sceneId:player.currentScene, choice});
-
         if(player.currentScene >= historiaBase.length){
             return res.json({ok:true, data:{title:"FIN", description:"¡Has completado todas las aventuras!", choices:[], fear:player.fear, inventory:player.inventory}});
         }
 
         let scene = historiaBase[player.currentScene];
-        const payasosPrompt = payasos.map(p=>`\${p.nombre}: debilidad = \${p.debilidad}`).join("\n");
-        const prompt = \`
-Jugador tiene miedo: \${player.fear}%
-Inventario: \${player.inventory.join(", ") || "Nada"}
+        const payasosPrompt = payasos.map(p=>`${p.nombre}: debilidad = ${p.debilidad}`).join("\n");
+
+        const prompt = `
+Jugador tiene miedo: ${player.fear}%
+Inventario: ${player.inventory.join(", ") || "Nada"}
 Payasos del Motel Clown:
-\${payasosPrompt}
+${payasosPrompt}
+
 Genera un JSON válido con título, descripción y opciones de historieta basado en esto:
-Título: \${scene.title}
-Descripción: \${scene.description}
-Opciones: \${scene.choices.map(c=>c.text).join(", ")}
-\`;
+Título: ${scene.title}
+Descripción: ${scene.description}
+Opciones: ${scene.choices.map(c => c.text).join(", ")}
+`;
 
         let aiScene;
         try{
@@ -81,4 +82,4 @@ app.get('*', (req,res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, ()=>console.log(\`✅ Motel Clown backend corriendo en puerto \${PORT}\`));
+app.listen(PORT, ()=>console.log(`✅ Motel Clown backend corriendo en puerto ${PORT}`));
